@@ -26,20 +26,37 @@ $(TARGET):$(OBJS)
 #	@rm -rf $(OBJ)
 
 #compile
-${OBJS_PATH}/%.o: ${SRCS_PATH}/%.c
-	@echo - Building $<
-	@$(CC) -E $(CFLAGS) $(CMACRO) $(INCS) -o $@.i -c $<
-	@$(CC) $(INCS) $(DEBUG) -c $(CFLAGS) $< -o $@
+# ${OBJS_PATH}/%.o: ${SRCS_PATH}/%.c
+# 	@echo - Building $<
+# 	@$(CC) -E $(CFLAGS) $(CMACRO) $(INCS) -o $@.i -c $<
+# 	@$(CC) $(INCS) $(DEBUG) -c $(CFLAGS) $< -o $@
 
-$(OBJS_PATH)/%.d: $(SRCS_PATH)/%.c
-	@echo - build $@;set -e; $(CC) $(CFLAGS) $(CMACRO) $(INCS) -MM $< > $@.$$$$; \
-	sed -e 's,\($*\)\.o[:]*,$(OBJS_PATH)/\1.o $@ : ,g' < $@.$$$$ > $@; \
-	sed -e "s,$(patsubst %.d,%.o,$(notdir $@)):,$(patsubst %.d,%.o,$@) $@ :,g" < $@.$$$$ > $@; \
-#	rm -f $@.$$$$
+# $(OBJS_PATH)/%.d: $(SRCS_PATH)/%.c
+# 	@echo - build $@;set -e; $(CC) $(CFLAGS) $(CMACRO) $(INCS) -MM $< > $@.$$$$; \
+# 	sed -e 's,\($*\)\.o[:]*,$(OBJS_PATH)/\1.o $@ : ,g' < $@.$$$$ > $@; \
+# 	sed -e "s,$(patsubst %.d,%.o,$(notdir $@)):,$(patsubst %.d,%.o,$@) $@ :,g" < $@.$$$$ > $@; \
+# #	rm -f $@.$$$$
 
--include $(OBJS_PATH)/$(OBJS:.o=.d)
+# -include $(OBJS_PATH)/$(OBJS:.o=.d)
 
-.PHONY:clean
+.PHONY:clean trash
+.SECONDARY:
 clean:
 	@echo "Remove linked and compiled files......"
 	rm -rf $(OBJ) $(TARGET) output
+
+trash_OBJS=${OBJS}
+trash:$(trash_OBJS)
+	$(CC) $(OBJS) $(LIB_PATH) $(LIB_NAMES) -o output/$(TARGET)$(VERSION)
+
+${OBJS_PATH}/%.o: ${OBJS_PATH}/%.s
+	@echo - Building $<
+	@$(CC) $(INCS) $(DEBUG) -c $(CFLAGS) $< -o $@
+
+${OBJS_PATH}/%.s: ${OBJS_PATH}/%.i
+	@echo - compile $<
+	@$(CC) $(INCS) $(DEBUG) -S $(CFLAGS) $< -o $@
+
+${OBJS_PATH}/%.i: ${SRCS_PATH}/%.c
+	@echo - pre $<
+	@$(CC) $(INCS) $(DEBUG) -E $(CFLAGS) $< -o $@
